@@ -1,0 +1,37 @@
+{% extends 'dashboard/base.html' %} 
+{% load static %}
+{% block content %}
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-3">
+            <a href="#">
+                <div class="card">
+                    <div class="card-header">Title</div>
+                    <div class="card-body">Description</div>
+                    <div class="card-footer mt-auto "><a href="#">
+                        <i class="fa fa-trash fa-2x"></i></a>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <br><br>
+
+    </div>
+</div>
+<br><br>
+<div class="container">
+    <form method="POST">
+        <fieldset class="form-group">
+            <legend class="border-bottom mb-4">Create Notes</legend>
+        </fieldset>
+        <div class="form-group">
+            <button href="" class="btn btn-outline-info" type="submit">
+                Create
+            </button>
+        </div>
+    </form>
+</div>
+
+{% endblock content %}
