@@ -141,7 +141,7 @@ def books(request):
     if request.method == "POST":
         form = DashboardForm(request.POST)
         text = request.POST['text']
-        url = "https://www.googleapis.com/books/v1/volumes?q="+text
+        url = "https://www.googleapis.com/books/v1/volumes?q=" + text
         r = requests.get(url)
         answer = r.json()
         result_list = []
@@ -207,3 +207,37 @@ def dictionary(request):
         context = {'form': form}
         return render(request, "dashboard/dictionary.html", context)
 
+
+def register(request):
+    if request.method == 'POST':
+        form = UserRegistrationForm(request.POST)
+        if form.is_valid():
+            form.save()
+            username = form.cleaned_data.get('username')
+            messages.success(request, f'Your account has been created! You are now able to log in')
+            # Optionally redirect after successful registration
+            return redirect('login')  # Adjust 'login' to your actual login URL name
+    else:
+        form = UserRegistrationForm()
+
+    # Ensure context is defined for both POST and GET methods
+    context = {
+        'form': form
+    }
+    return render(request, "dashboard/register.html", context)
+
+
+def profile(request):
+    homeworks = Homework.objects.filter(is_finished=False, user=request.user)
+    todos = Todo.objects.filter(is_finished=False, user=request.user)
+
+    homeworks_done = len(homeworks) == 0
+    todos_done = len(todos) == 0
+
+    context = {
+        'homeworks': homeworks,
+        'todos': todos,
+        'homeworks_done': homeworks_done,
+        'todos_done': todos_done
+    }
+    return render(request, "dashboard/profile.html", context)
