@@ -73,6 +73,15 @@ footer {
     line-height: 1.5;
 }
 
+/* Standardize card images */
+.card-img-top {
+    width: 100%; /* Make the image responsive to the card's width */
+    height: 200px; /* Set a fixed height */
+    object-fit: cover; /* Ensures the image covers the area while maintaining aspect ratio */
+    border-top-left-radius: 10px; /* Round the corners of the image */
+    border-top-right-radius: 10px; /* Round the corners of the image */
+}
+
 /* Links */
 a {
     text-decoration: none;

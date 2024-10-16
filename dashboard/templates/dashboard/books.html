@@ -1,10 +1,10 @@
-{% extends 'dashboard/base.html' %} 
-{% load static %} 
+{% extends 'dashboard/base.html' %}
+{% load static %}
 {% block content %}
 
 <section class='text-center container'>
     <h2>Search books and browse your favorite</h2>
-    <p>just enter the search query to obtain the results</p><b></b>
+    <p>Just enter the search query to obtain the results.</p><b></b>
     <form action="" method="post">
         {% csrf_token %}
         {{ form }}
@@ -30,7 +30,7 @@
                         <h6 class="p-0 m-1">{{ result.description }}</h6>
                         {% endif %}
                             {% if result.categories %}
-                        <b> 
+                        <b>
                             <h6 class="ml-0 mt-3">Category:
                                   {% for category in result.categories %}
                                 {{ category }}

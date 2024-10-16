@@ -5,6 +5,8 @@
 {% block content %}
 <section class="text-center">
     <div class="container">
+        <h2>Welcome, {{ user.first_name }} {{ user.middle_name }} {{ user.last_name }}!</h2> <!-- Added name here -->
+
         <!-- ToDos Section -->
         {% if not todos_done %}
         <h2>Due ToDos</h2>

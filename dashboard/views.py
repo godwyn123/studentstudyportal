@@ -1,11 +1,8 @@
-from django.contrib.sites import requests
 from django.shortcuts import render, redirect
 from .forms import *
 from django.contrib import messages
 from django.views import generic
-from django.contrib.auth.decorators import login_required
 import requests
-
 
 
 # Create your views here.
@@ -17,18 +14,25 @@ def notes(request):
     if request.method == 'POST':
         form = NotesForm(request.POST)
         if form.is_valid():
-            notes = Notes(user=request.user, title=request.POST['title'], description=request.POST['description'])
+            notes = Notes(user=request.user, **form.cleaned_data)
             notes.save()
-        messages.success(request, f"{request.user.username}, Your notes have been saved.")
+            messages.success(request, f"{request.user.username}, your notes have been saved.")
+            return redirect("notes")  # Redirect after successful save
     else:
         form = NotesForm()
+
     notes = Notes.objects.filter(user=request.user)
     context = {'notes': notes, 'form': form}
     return render(request, 'dashboard/notes.html', context)
 
 
 def delete_note(request, pk=None):
-    Notes.objects.get(id=pk).delete()
+    try:
+        note = Notes.objects.get(id=pk, user=request.user)
+        note.delete()
+        messages.success(request, "Note deleted successfully.")
+    except Notes.DoesNotExist:
+        messages.error(request, "Note does not exist.")
     return redirect("notes")
 
 
@@ -40,53 +44,43 @@ def homework(request):
     if request.method == "POST":
         form = HomeworkForm(request.POST)
         if form.is_valid():
-            try:
-                finished = request.POST['is_finished']
-                if finished == 'on':
-                    finished = True
-                else:
-                    finished = False
-            except:
-                finished = False
-            homeworks = Homework(
+            homework_instance = Homework(
                 user=request.user,
-                subject=request.POST['subject'],
-                title=request.POST['title'],
-                description=request.POST['description'],
-                due=request.POST['due'],
-                is_finished=finished
-
+                **form.cleaned_data
             )
-
-            homeworks.save()
-            messages.success(request, f"{request.user.username}, Your homeworks have been saved.")
+            homework_instance.save()
+            messages.success(request, f"{request.user.username}, your homework has been saved.")
+            return redirect("homework")  # Redirect after successful save
     else:
         form = HomeworkForm()
-    homework = Homework.objects.filter(user=request.user)
-    if len(homework) == 0:
-        homework_done = True
-    else:
-        homework_done = False
+
+    homework_list = Homework.objects.filter(user=request.user)
     context = {
-        'homeworks': homework,
-        'homeworks_done': homework_done,
+        'homeworks': homework_list,
+        'homeworks_done': not homework_list.exists(),
         'form': form,
     }
     return render(request, 'dashboard/homework.html', context)
 
 
 def update_homework(request, pk=None):
-    homework = Homework.objects.get(id=pk)
-    if homework.is_finished == True:
-        homework.is_finished = False
-    else:
-        homework.is_finished = True
-    homework.save()
+    try:
+        homework = Homework.objects.get(id=pk)
+        homework.is_finished = not homework.is_finished  # Toggle the finished status
+        homework.save()
+        messages.success(request, "Homework status updated.")
+    except Homework.DoesNotExist:
+        messages.error(request, "Homework does not exist.")
     return redirect('homework')
 
 
 def delete_homework(request, pk=None):
-    Homework.objects.get(id=pk).delete()
+    try:
+        homework = Homework.objects.get(id=pk)
+        homework.delete()
+        messages.success(request, "Homework deleted successfully.")
+    except Homework.DoesNotExist:
+        messages.error(request, "Homework does not exist.")
     return redirect("homework")
 
 
@@ -94,158 +88,114 @@ def todo(request):
     if request.method == "POST":
         form = TodoForm(request.POST)
         if form.is_valid():
-            try:
-                finished = request.POST['is_finished']
-                if finished == 'on':
-                    finished = True
-                else:
-                    finished = False
-            except:
-                finished = False
-            todos = Todo(
+            todo_instance = Todo(
                 user=request.user,
-                title=request.POST['title'],
-                is_finished=finished
+                **form.cleaned_data
             )
-            todos.save()
-            messages.success(request, f"{request.user.username}, Your todo have been saved.")
+            todo_instance.save()
+            messages.success(request, f"{request.user.username}, your todo has been saved.")
+            return redirect("todo")  # Redirect after successful save
     else:
         form = TodoForm()
-    todo = Todo.objects.filter(user=request.user)
-    if len(todo) == 0:
-        todos_done = True
-    else:
-        todos_done = False
+
+    todo_list = Todo.objects.filter(user=request.user)
     context = {
         'form': form,
-        'todos': todo,
-        'todos_done': todos_done
+        'todos': todo_list,
+        'todos_done': not todo_list.exists()
     }
     return render(request, "dashboard/todo.html", context)
 
 
 def update_todo(request, pk=None):
-    todo = Todo.objects.get(id=pk)
-    if todo.is_finished == True:
-        todo.is_finished = False
-    else:
-        todo.is_finished = True
-    todo.save()
+    try:
+        todo = Todo.objects.get(id=pk)
+        todo.is_finished = not todo.is_finished  # Toggle the finished status
+        todo.save()
+        messages.success(request, "Todo status updated.")
+    except Todo.DoesNotExist:
+        messages.error(request, "Todo does not exist.")
     return redirect("todo")
 
 
 def delete_todo(request, pk=None):
-    Todo.objects.get(id=pk).delete()
+    try:
+        todo = Todo.objects.get(id=pk)
+        todo.delete()
+        messages.success(request, "Todo deleted successfully.")
+    except Todo.DoesNotExist:
+        messages.error(request, "Todo does not exist.")
     return redirect("todo")
 
 
 def books(request):
-    if request.method == "POST":
-        form = DashboardForm(request.POST)
-        text = request.POST['text']
-        url = "https://www.googleapis.com/books/v1/volumes?q=" + text
+    context = {}
+    form = DashboardForm(request.POST or None)
+
+    if request.method == "POST" and form.is_valid():
+        text = form.cleaned_data['text']
+        url = f"https://www.googleapis.com/books/v1/volumes?q={text}"
         r = requests.get(url)
         answer = r.json()
-        result_list = []
-        for i in range(len(answer.get('items', []))):
-            volume_info = answer['items'][i]['volumeInfo']
-            image_link = volume_info.get('imageLinks')
-
-            result_dict = {
-                'title': volume_info.get('title'),
-                'subtitle': volume_info.get('subtitle'),
-                'description': volume_info.get('description'),
-                'count': volume_info.get('pageCount'),
-                'categories': volume_info.get('categories'),
-                'rating': volume_info.get('averageRating'),
-                'thumbnail': image_link.get('thumbnail') if image_link else None,
-                'preview': volume_info.get('previewLink')
+        result_list = [
+            {
+                'title': item['volumeInfo'].get('title'),
+                'subtitle': item['volumeInfo'].get('subtitle'),
+                'description': item['volumeInfo'].get('description'),
+                'count': item['volumeInfo'].get('pageCount'),
+                'categories': item['volumeInfo'].get('categories'),
+                'rating': item['volumeInfo'].get('averageRating'),
+                'thumbnail': item['volumeInfo'].get('imageLinks', {}).get('thumbnail'),
+                'preview': item['volumeInfo'].get('previewLink')
             }
-            result_list.append(result_dict)
-            context = {
-                'form': form,
-                'results': result_list
-            }
-        return render(request, 'dashboard/books.html', context)
-    else:
-        form = DashboardForm()
-        context = {'form': form}
-        return render(request, 'dashboard/books.html', context)
+            for item in answer.get('items', [])
+        ]
+        context['results'] = result_list
 
+    context['form'] = form
+    return render(request, 'dashboard/books.html', context)
 
-import requests
-from django.shortcuts import render
-from .forms import DashboardForm
-
-import requests
-from django.shortcuts import render
-from .forms import DashboardForm
 
 def dictionary(request):
+    context = {}
+    form = DashboardForm(request.POST or None)
+
     if request.method == "POST":
-        form = DashboardForm(request.POST)
         text = request.POST.get('text', '').strip()  # Strip whitespace for clean input
         api_key = "b27a1c5b-0f42-4081-ba58-e0b96c33db4f"
         url = f"https://dictionaryapi.com/api/v3/references/thesaurus/json/{text}?key={api_key}"
 
         if not text:
-            context = {
-                'form': form,
-                'input': '',
-                'error': 'Please enter a word to search.'
-            }
-            return render(request, "dashboard/dictionary.html", context)
+            context['error'] = 'Please enter a word to search.'
+        else:
+            try:
+                r = requests.get(url)
+                r.raise_for_status()  # Raise an error for bad status codes
+                answer = r.json()
 
-        try:
-            r = requests.get(url)
-            print("Request URL:", url)  # Log the request URL
-            print("Status Code:", r.status_code)  # Log the status code
-            r.raise_for_status()  # Raise an error for bad status codes
-            answer = r.json()
-            print("API Response:", answer)  # Log the full API response
-
-            if isinstance(answer, list) and answer:
-                word_data = answer[0]
-
-                if isinstance(word_data, dict):
-                    definition = word_data.get('shortdef', ['No definition available'])[0]
-                    synonyms = word_data.get('meta', {}).get('syns', [[]])[0]
-
-                    context = {
-                        'form': form,
-                        'input': text,
-                        'definition': definition,
-                        'synonyms': synonyms or ['No synonyms available'],
-                    }
+                if isinstance(answer, list) and answer:
+                    word_data = answer[0]
+                    if isinstance(word_data, dict):
+                        definition = word_data.get('shortdef', ['No definition available'])[0]
+                        synonyms = word_data.get('meta', {}).get('syns', [[]])[0]
+                        context.update({
+                            'definition': definition,
+                            'synonyms': synonyms or ['No synonyms available'],
+                        })
+                    else:
+                        context['input'] = 'No results found'
                 else:
-                    context = {'form': form, 'input': 'No results found'}
-            else:
-                context = {'form': form, 'input': 'No results found'}
+                    context['input'] = 'No results found'
 
-        except requests.exceptions.HTTPError as http_err:
-            context = {
-                'form': form,
-                'input': '',
-                'error': f"HTTP error occurred: {http_err} (Status Code: {http_err.response.status_code})"
-            }
-        except requests.exceptions.RequestException as req_err:
-            context = {
-                'form': form,
-                'input': '',
-                'error': f"Error fetching data from the API: {str(req_err)}"
-            }
-        except Exception as e:
-            context = {
-                'form': form,
-                'input': '',
-                'error': f"An unexpected error occurred: {str(e)}"
-            }
+            except requests.exceptions.HTTPError as http_err:
+                context['error'] = f"HTTP error occurred: {http_err}"
+            except requests.exceptions.RequestException as req_err:
+                context['error'] = f"Error fetching data from the API: {str(req_err)}"
+            except Exception as e:
+                context['error'] = f"An unexpected error occurred: {str(e)}"
 
-        return render(request, "dashboard/dictionary.html", context)
-
-    else:
-        form = DashboardForm()
-        return render(request, "dashboard/dictionary.html", {'form': form})
+    context['form'] = form
+    return render(request, "dashboard/dictionary.html", context)
 
 
 def register(request):
@@ -253,17 +203,12 @@ def register(request):
         form = UserRegistrationForm(request.POST)
         if form.is_valid():
             form.save()
-            username = form.cleaned_data.get('username')
-            messages.success(request, f'Your account has been created! You are now able to log in')
-            # Optionally redirect after successful registration
+            messages.success(request, 'Your account has been created! You are now able to log in.')
             return redirect('login')  # Adjust 'login' to your actual login URL name
     else:
         form = UserRegistrationForm()
 
-    # Ensure context is defined for both POST and GET methods
-    context = {
-        'form': form
-    }
+    context = {'form': form}
     return render(request, "dashboard/register.html", context)
 
 
@@ -271,13 +216,10 @@ def profile(request):
     homeworks = Homework.objects.filter(is_finished=False, user=request.user)
     todos = Todo.objects.filter(is_finished=False, user=request.user)
 
-    homeworks_done = len(homeworks) == 0
-    todos_done = len(todos) == 0
-
     context = {
         'homeworks': homeworks,
         'todos': todos,
-        'homeworks_done': homeworks_done,
-        'todos_done': todos_done
+        'homeworks_done': not homeworks.exists(),
+        'todos_done': not todos.exists()
     }
     return render(request, "dashboard/profile.html", context)
