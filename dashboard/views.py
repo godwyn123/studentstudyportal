@@ -3,7 +3,9 @@ from django.shortcuts import render, redirect
 from .forms import *
 from django.contrib import messages
 from django.views import generic
+from django.contrib.auth.decorators import login_required
 import requests
+
 
 
 # Create your views here.
@@ -171,41 +173,79 @@ def books(request):
         return render(request, 'dashboard/books.html', context)
 
 
+import requests
+from django.shortcuts import render
+from .forms import DashboardForm
+
+import requests
+from django.shortcuts import render
+from .forms import DashboardForm
+
 def dictionary(request):
     if request.method == "POST":
         form = DashboardForm(request.POST)
-        text = request.POST['text']
-        url = "https://api.dictionaryapi.dev/api/v2/entries/en/" + text
-        r = requests.get(url)
-        answer = r.json()
+        text = request.POST.get('text', '').strip()  # Strip whitespace for clean input
+        api_key = "b27a1c5b-0f42-4081-ba58-e0b96c33db4f"
+        url = f"https://dictionaryapi.com/api/v3/references/thesaurus/json/{text}?key={api_key}"
 
-        try:
-            phonetics = answer[0]['phonetics'][0]['text']
-            audio = answer[0]['phonetics'][0]['audio']
-            definition = answer[0]['meanings'][0]['definitions'][0]['definition']
-            example = answer[0]['meanings'][0]['definitions'][0].get('example', 'No example available.')
-            synonyms = answer[0]['meanings'][0]['definitions'][0].get('synonyms', [])
-
-            context = {
-                'form': form,
-                'input': text,
-                'phonetics': phonetics,
-                'audio': audio,
-                'definition': definition,
-                'example': example,
-                'synonyms': synonyms
-            }
-        except (IndexError, KeyError):
+        if not text:
             context = {
                 'form': form,
                 'input': '',
+                'error': 'Please enter a word to search.'
+            }
+            return render(request, "dashboard/dictionary.html", context)
+
+        try:
+            r = requests.get(url)
+            print("Request URL:", url)  # Log the request URL
+            print("Status Code:", r.status_code)  # Log the status code
+            r.raise_for_status()  # Raise an error for bad status codes
+            answer = r.json()
+            print("API Response:", answer)  # Log the full API response
+
+            if isinstance(answer, list) and answer:
+                word_data = answer[0]
+
+                if isinstance(word_data, dict):
+                    definition = word_data.get('shortdef', ['No definition available'])[0]
+                    synonyms = word_data.get('meta', {}).get('syns', [[]])[0]
+
+                    context = {
+                        'form': form,
+                        'input': text,
+                        'definition': definition,
+                        'synonyms': synonyms or ['No synonyms available'],
+                    }
+                else:
+                    context = {'form': form, 'input': 'No results found'}
+            else:
+                context = {'form': form, 'input': 'No results found'}
+
+        except requests.exceptions.HTTPError as http_err:
+            context = {
+                'form': form,
+                'input': '',
+                'error': f"HTTP error occurred: {http_err} (Status Code: {http_err.response.status_code})"
+            }
+        except requests.exceptions.RequestException as req_err:
+            context = {
+                'form': form,
+                'input': '',
+                'error': f"Error fetching data from the API: {str(req_err)}"
+            }
+        except Exception as e:
+            context = {
+                'form': form,
+                'input': '',
+                'error': f"An unexpected error occurred: {str(e)}"
             }
 
         return render(request, "dashboard/dictionary.html", context)
+
     else:
         form = DashboardForm()
-        context = {'form': form}
-        return render(request, "dashboard/dictionary.html", context)
+        return render(request, "dashboard/dictionary.html", {'form': form})
 
 
 def register(request):

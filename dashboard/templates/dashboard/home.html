@@ -1,81 +1,81 @@
 {% extends 'dashboard/base.html' %}
 {% load static %}
 {% block content %}
+
 <script>
-    // Check if the user is logged in
-    const isAuthenticated = {{ user.is_authenticated|yesno:"true,false" }};
-    if (!isAuthenticated) {
-        // Redirect to the login page if the user is not authenticated
-        window.location.href = "{% url 'login' %}";
-    }
+  const isAuthenticated = {{ user.is_authenticated|yesno:"true,false" }};
+  if (!isAuthenticated) {
+    window.location.href = "{% url 'login' %}";
+  }
 </script>
 
-<section class="container text-center">
-    <h3>Welcome</h3>
-    <hr> <br>
-    <div class="row justify-content-center">  <!-- Center the row -->
-        <div class="col-md-3">
-            <a href="{% url 'notes' %}">
-                <div class="card">
-                    <img class="card-img-top" src="{% static 'images/notes.jpg' %}" alt="Notes image">
-                    <div class="card-body">
-                        <h5 class="card-title">Notes</h5>
-                        Create Notes to refer them later. They are stored permanently until deleted
-                    </div>
-                </div>
-            </a>
-        </div>
+<section class="container text-center my-5"> <!-- Adjusted margin -->
+  <h3 class="mb-4">Welcome to Your Dashboard</h3>
+  <hr class="mb-5">
 
-        <div class="col-md-3">
-            <a href="{% url 'homework' %}">
-                <div class="card">
-                    <img class="card-img-top" src="{% static 'images/homework.jpg' %}" alt="Notes image">
-                    <div class="card-body">
-                        <h5 class="card-title">Homework</h5>
-                        Add homeworks and assign them deadlines. They will be displayed prioritised by deadlines
-                    </div>
-                </div>
-            </a>
+  <div class="row justify-content-center">
+    <div class="col-md-3 mb-4">
+      <a href="{% url 'notes' %}" class="text-decoration-none">
+        <div class="card shadow-sm h-100">
+          <img class="card-img-top" src="{% static 'images/notes.jpg' %}" alt="Notes">
+          <div class="card-body">
+            <h5 class="card-title">Notes</h5>
+            <p class="card-text">Store your thoughts.</p> <!-- Shortened description -->
+          </div>
         </div>
-
-        <div class="col-md-3">
-            <a href="{% url 'todo' %}">
-                <div class="card">
-                    <img class="card-img-top" src="{% static 'images/todo.jpg' %}" alt="Notes image">
-                    <div class="card-body">
-                        <h5 class="card-title">To Do</h5>
-                        Add your to-do lists for your day and remove them as you finish
-                    </div>
-                </div>
-            </a>
-        </div>
+      </a>
     </div>
-    <br><br><br>
-    <div class="row justify-content-center">  <!-- Center the row -->
-        <div class="col-md-3">
-            <a href="{% url 'notes' %}">
-                <div class="card mt-20">
-                    <img class="card-img-top" src="{% static 'images/books.jpg' %}" alt="Notes image">
-                    <div class="card-body">
-                        <h5 class="card-title">Books</h5>
-                        Browse books from a list of neatly organised book menu
-                    </div>
-                </div>
-            </a>
-        </div>
 
-        <div class="col-md-3">
-            <a href="{% url 'dictionary' %}">
-                <div class="card">
-                    <img class="card-img-top" src="{% static 'images/dictionary.jpg' %}" alt="Notes image">
-                    <div class="card-body">
-                        <h5 class="card-title">Dictionary</h5>
-                        A vocabulary from a book is troubling you? No problem, enter the word, and the meaning will be displayed almost instantaneously.
-                    </div>
-                </div>
-            </a>
+    <div class="col-md-3 mb-4">
+      <a href="{% url 'homework' %}" class="text-decoration-none">
+        <div class="card shadow-sm h-100">
+          <img class="card-img-top" src="{% static 'images/homework.jpg' %}" alt="Homework">
+          <div class="card-body">
+            <h5 class="card-title">Homework</h5>
+            <p class="card-text">Manage your assignments.</p> <!-- Shortened description -->
+          </div>
         </div>
+      </a>
     </div>
+
+    <div class="col-md-3 mb-4">
+      <a href="{% url 'todo' %}" class="text-decoration-none">
+        <div class="card shadow-sm h-100">
+          <img class="card-img-top" src="{% static 'images/todo.jpg' %}" alt="To-do">
+          <div class="card-body">
+            <h5 class="card-title">To-Do</h5>
+            <p class="card-text">Track your tasks.</p> <!-- Shortened description -->
+          </div>
+        </div>
+      </a>
+    </div>
+  </div>
+
+  <div class="row justify-content-center">
+    <div class="col-md-3 mb-4">
+      <a href="{% url 'books' %}" class="text-decoration-none">
+        <div class="card shadow-sm h-100">
+          <img class="card-img-top" src="{% static 'images/books.jpg' %}" alt="Books">
+          <div class="card-body">
+            <h5 class="card-title">Books</h5>
+            <p class="card-text">Explore available books.</p> <!-- Shortened description -->
+          </div>
+        </div>
+      </a>
+    </div>
+
+    <div class="col-md-3 mb-4">
+      <a href="{% url 'dictionary' %}" class="text-decoration-none">
+        <div class="card shadow-sm h-100">
+          <img class="card-img-top" src="{% static 'images/dictionary.jpg' %}" alt="Dictionary">
+          <div class="card-body">
+            <h5 class="card-title">Dictionary</h5>
+            <p class="card-text">Find word meanings.</p> <!-- Shortened description -->
+          </div>
+        </div>
+      </a>
+    </div>
+  </div>
 </section>
 
 {% endblock content %}
