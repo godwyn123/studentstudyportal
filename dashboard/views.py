@@ -128,31 +128,48 @@ def delete_todo(request, pk=None):
     return redirect("todo")
 
 
+import time
+import requests
+from django.shortcuts import render
+from .forms import DashboardForm
+
+
 def books(request):
     context = {}
     form = DashboardForm(request.POST or None)
+    context['form'] = form  # Add form to context early
 
     if request.method == "POST" and form.is_valid():
         text = form.cleaned_data['text']
         url = f"https://www.googleapis.com/books/v1/volumes?q={text}"
-        r = requests.get(url)
-        answer = r.json()
-        result_list = [
-            {
-                'title': item['volumeInfo'].get('title'),
-                'subtitle': item['volumeInfo'].get('subtitle'),
-                'description': item['volumeInfo'].get('description'),
-                'count': item['volumeInfo'].get('pageCount'),
-                'categories': item['volumeInfo'].get('categories'),
-                'rating': item['volumeInfo'].get('averageRating'),
-                'thumbnail': item['volumeInfo'].get('imageLinks', {}).get('thumbnail'),
-                'preview': item['volumeInfo'].get('previewLink')
-            }
-            for item in answer.get('items', [])
-        ]
-        context['results'] = result_list
 
-    context['form'] = form
+        try:
+            # Introduce a small delay to avoid triggering rate limits too quickly
+            time.sleep(1)  # 1 second delay
+            r = requests.get(url)
+            r.raise_for_status()  # Raises an exception for non-200 responses
+            answer = r.json()
+
+            # Prepare the result list from the API response
+            result_list = [
+                {
+                    'title': item['volumeInfo'].get('title', 'No Title'),
+                    'subtitle': item['volumeInfo'].get('subtitle', 'No Subtitle'),
+                    'description': item['volumeInfo'].get('description', 'No Description'),
+                    'count': item['volumeInfo'].get('pageCount', 'N/A'),
+                    'categories': item['volumeInfo'].get('categories', ['N/A']),
+                    'rating': item['volumeInfo'].get('averageRating', 'N/A'),
+                    'thumbnail': item['volumeInfo'].get('imageLinks', {}).get('thumbnail', ''),
+                    'preview': item['volumeInfo'].get('previewLink', '#')
+                }
+                for item in answer.get('items', [])
+            ]
+            context['results'] = result_list  # Add results to the context
+
+        except requests.exceptions.RequestException as e:
+            print(f"Error fetching data from Google Books API: {e}")
+            context['results'] = []  # Empty results in case of error
+
     return render(request, 'dashboard/books.html', context)
 
 
@@ -161,17 +178,23 @@ def dictionary(request):
     form = DashboardForm(request.POST or None)
 
     if request.method == "POST":
-        text = request.POST.get('text', '').strip()  # Strip whitespace for clean input
-        api_key = "b27a1c5b-0f42-4081-ba58-e0b96c33db4f"
-        url = f"https://dictionaryapi.com/api/v3/references/thesaurus/json/{text}?key={api_key}"
+        text = request.POST.get('text', '').strip()  # Get the input text and strip whitespace
 
         if not text:
             context['error'] = 'Please enter a word to search.'
         else:
+            api_key = "b27a1c5b-0f42-4081-ba58-e0b96c33db4f"
+            url = f"https://dictionaryapi.com/api/v3/references/thesaurus/json/{text}?key={api_key}"
+
+            print(f"Requesting URL: {url}")  # Debug: Print the URL being requested
+
             try:
                 r = requests.get(url)
                 r.raise_for_status()  # Raise an error for bad status codes
                 answer = r.json()
+
+                # Debugging: Print the raw answer from the API
+                print(f"API Response: {answer}")
 
                 if isinstance(answer, list) and answer:
                     word_data = answer[0]
@@ -180,12 +203,13 @@ def dictionary(request):
                         synonyms = word_data.get('meta', {}).get('syns', [[]])[0]
                         context.update({
                             'definition': definition,
-                            'synonyms': synonyms or ['No synonyms available'],
+                            'synonyms': synonyms if synonyms else ['No synonyms available'],
+                            'input': text,  # Store the input word for display
                         })
                     else:
-                        context['input'] = 'No results found'
+                        context['error'] = 'No valid data returned from API.'
                 else:
-                    context['input'] = 'No results found'
+                    context['error'] = 'No results found.'
 
             except requests.exceptions.HTTPError as http_err:
                 context['error'] = f"HTTP error occurred: {http_err}"

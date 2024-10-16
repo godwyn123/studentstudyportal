@@ -1,8 +1,7 @@
-
 from django import forms
 from django.contrib.auth.models import User
-from django.contrib.auth.forms import UserCreationForm
 from .models import Notes, Homework, Todo
+from django.forms import DateTimeInput
 
 
 class NotesForm(forms.ModelForm):
@@ -18,8 +17,10 @@ class DateInput(forms.DateInput):
 class HomeworkForm(forms.ModelForm):
     class Meta:
         model = Homework
-        widgets = {'due': DateInput()}
         fields = ['subject', 'title', 'description', 'due', 'is_finished']
+        widgets = {
+            'due': DateTimeInput(attrs={'type': 'datetime-local'}),
+        }
 
 
 class DashboardForm(forms.Form):
