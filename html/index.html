@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SearchPro - Elegant Search System</title>
+    <style>
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #6a11cb, #2575fc);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: #fff;
+        }
+
+        .container {
+            background: #fff;
+            border-radius: 15px;
+            padding: 40px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            width: 100%;
+            max-width: 450px;
+            text-align: center;
+        }
+
+        h1 {
+            margin-bottom: 25px;
+            font-size: 2em;
+            color: #333;
+        }
+
+        p {
+            margin-bottom: 20px;
+            font-size: 1em;
+            color: #555;
+        }
+
+        input[type="email"],
+        input[type="password"],
+        input[type="text"] {
+            width: 100%;
+            padding: 14px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+            box-sizing: border-box;
+            transition: border-color 0.3s ease;
+        }
+
+        input[type="email"]:focus,
+        input[type="password"]:focus,
+        input[type="text"]:focus {
+            border-color: #2575fc;
+            outline: none;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            margin-top: 15px;
+            background: #2575fc;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        button:hover {
+            background: #1a5dc7;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .form-container {
+            margin-bottom: 20px;
+        }
+
+        .footer-link {
+            font-size: 0.9em;
+            color: #2575fc;
+        }
+
+        .footer-link:hover {
+            text-decoration: underline;
+        }
+
+        
+        @media screen and (max-width: 768px) {
+            .container {
+                padding: 25px;
+                max-width: 90%;
+            }
+
+            h1 {
+                font-size: 1.7em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        
+        <div id="subscriptionSection">
+            <h1>Welcome to SearchPro</h1>
+            <p>Subscribe to unlock unlimited searches!</p>
+            <div class="form-container">
+                <input type="email" id="email" placeholder="Enter your email" required>
+                <input type="password" id="password" placeholder="Create a password" required>
+                <button onclick="subscribe()">Subscribe</button>
+            </div>
+            <p class="footer-link">Already have an account? <a href="#" onclick="showLogin()">Login</a></p>
+        </div>
+
+        <div id="loginSection" class="hidden">
+            <h1>Login to SearchPro</h1>
+            <div class="form-container">
+                <input type="email" id="loginEmail" placeholder="Email" required>
+                <input type="password" id="loginPassword" placeholder="Password" required>
+                <button onclick="login()">Login</button>
+            </div>
+            <p class="footer-link">Don't have an account? <a href="#" onclick="showSubscription()">Sign Up</a></p>
+        </div>
+
+      
+        <div id="searchSection" class="hidden">
+            <h1>Search Anything</h1>
+            <input type="text" id="searchInput" placeholder="What are you looking for?" required>
+            <button onclick="search()">Search</button>
+            <div id="searchResults"></div>
+        </div>
+    </div>
+
+    <script>
+        
+        function subscribe() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            if (!email || !password) {
+                alert("Please provide both email and password.");
+                return;
+            }
+
+            
+            alert('Subscription successful! You can now search.');
+            showSearchSection();
+        }
+
+        
+        function login() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+
+            if (!email || !password) {
+                alert("Please provide both email and password.");
+                return;
+            }
+
+            
+            alert('Login successful! You can now search.');
+            showSearchSection();
+        }
+
+      
+        function showSubscription() {
+            document.getElementById('loginSection').classList.add('hidden');
+            document.getElementById('subscriptionSection').classList.remove('hidden');
+        }
+
+        
+        function showLogin() {
+            document.getElementById('subscriptionSection').classList.add('hidden');
+            document.getElementById('loginSection').classList.remove('hidden');
+        }
+
+       
+        function showSearchSection() {
+            document.getElementById('subscriptionSection').classList.add('hidden');
+            document.getElementById('loginSection').classList.add('hidden');
+            document.getElementById('searchSection').classList.remove('hidden');
+        }
+
+        function search() {
+            const query = document.getElementById('searchInput').value;
+            const resultsContainer = document.getElementById('searchResults');
+
+            if (!query) {
+                resultsContainer.innerHTML = "<p>Please enter a search term.</p>";
+                return;
+            }
+
+            
+            const dummyData = [
+                "How to code in HTML",
+                "Best programming languages",
+                "CSS design patterns",
+                "JavaScript for beginners",
+                "Building a web application",
+                "Advanced algorithms in Python"
+            ];
+
+            const results = dummyData.filter(item => item.toLowerCase().includes(query.toLowerCase()));
+            resultsContainer.innerHTML = results.length
+                ? `<ul>${results.map(item => `<li>${item}</li>`).join('')}</ul>`
+                : "<p>No results found.</p>";
+        }
+    </script>
+</body>
+</html>
+
